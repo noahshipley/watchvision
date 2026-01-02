@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WatchVision</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1>WatchVision</h1>
+</header>
+
+<main>
+    <!-- AUTH -->
+    <section id="auth-section">
+        <h2>Login / Signup</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <div class="auth-buttons">
+            <button id="signup-btn">Sign Up</button>
+            <button id="login-btn">Login</button>
+        </div>
+        <p id="auth-message"></p>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard-section" style="display:none;">
+        <p id="welcome"></p>
+
+        <!-- VIDEO UPLOAD -->
+        <div class="card" id="upload-card">
+            <h3>Upload Video</h3>
+            <input type="text" id="video-title" placeholder="Video Title">
+            <input type="url" id="video-url" placeholder="Video URL (YouTube or MP4)">
+            <button id="upload-btn">Upload</button>
+        </div>
+
+        <!-- VIDEO FEED -->
+        <div class="card" id="video-feed">
+            <h3>Trending Videos</h3>
+            <ul id="videos-list"></ul>
+        </div>
+
+        <!-- MODERATION -->
+        <div class="card" id="mod-section" style="display:none;">
+            <h3>Moderator Panel</h3>
+            <ul id="mod-videos-list"></ul>
+        </div>
+
+        <button id="logout-btn" class="logout-btn">Logout</button>
+    </section>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
