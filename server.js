@@ -1,145 +1,54 @@
-const API = ""; // empty = same domain on Render
-let currentUser = null;
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const app = express();
+const port = process.env.PORT || 3000;
 
-// Elements
-const usernameInput = document.getElementById("username");
-const passwordInput = document.getElementById("password");
-const authMessage = document.getElementById("auth-message");
-const authSection = document.getElementById("auth-section");
-const dashboardSection = document.getElementById("dashboard-section");
+// Serve frontend
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
-// Navigation
-const homeBtn = document.getElementById("home-btn");
-const uploadNavBtn = document.getElementById("upload-nav-btn");
-const modNavBtn = document.getElementById("mod-nav-btn");
+// Load users/videos
+let users = JSON.parse(fs.readFileSync("users.json"));
+let videos = JSON.parse(fs.readFileSync("videos.json"));
 
-// Panels
-const videoFeed = document.getElementById("video-feed");
-const uploadPanel = document.getElementById("upload-panel");
-const modPanel = document.getElementById("mod-panel");
-
-// Video upload
-const videoTitle = document.getElementById("video-title");
-const videoURL = document.getElementById("video-url");
-const uploadBtn = document.getElementById("upload-btn");
-
-// Moderator list
-const modVideosList = document.getElementById("mod-videos-list");
-
-// Logout
-const logoutBtn = document.getElementById("logout-btn");
-
-// --- Signup ---
-document.getElementById("signup-btn").addEventListener("click", async () => {
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value;
-    const res = await fetch(`${API}/signup`, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({username,password,age:12})
-    });
-    const data = await res.json();
-    authMessage.textContent = data.error || "Account created! Login now.";
+// Signup
+app.post("/signup", (req, res) => {
+  const { username, password, age } = req.body;
+  if (users[username]) return res.json({ error: "Username exists" });
+  users[username] = { password, age, role: "user" };
+  fs.writeFileSync("users.json", JSON.stringify(users));
+  res.json({ success: true });
 });
 
-// --- Login ---
-document.getElementById("login-btn").addEventListener("click", async () => {
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value;
-    const res = await fetch(`${API}/login`,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({username,password})
-    });
-    const data = await res.json();
-    if(data.error) return authMessage.textContent=data.error;
-    currentUser = username;
-    authSection.style.display="none";
-    dashboardSection.style.display="flex";
-    loadVideos();
-    if(data.user.role==="mod") modNavBtn.style.display="block";
+// Login
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+  if (!users[username] || users[username].password !== password)
+    return res.json({ error: "Invalid credentials" });
+  res.json({ user: users[username] });
 });
 
-// --- Logout ---
-logoutBtn.addEventListener("click",()=>{
-    currentUser=null;
-    dashboardSection.style.display="none";
-    authSection.style.display="block";
+// Upload video
+app.post("/upload", (req, res) => {
+  const { username, title, url } = req.body;
+  const id = Math.random().toString(36).substr(2, 9);
+  videos.push({ id, username, title, url, approved: false });
+  fs.writeFileSync("videos.json", JSON.stringify(videos));
+  res.json({ success: true });
 });
 
-// --- Upload video ---
-uploadBtn.addEventListener("click", async ()=>{
-    const title = videoTitle.value.trim();
-    const url = videoURL.value.trim();
-    if(!title || !url) return alert("Fill both fields!");
-    const res = await fetch(`${API}/upload`, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({username:currentUser,title,url})
-    });
-    const data = await res.json();
-    if(data.success){
-        alert("Uploaded! Awaiting approval.");
-        videoTitle.value=""; videoURL.value="";
-        loadVideos();
-    }
+// Approve video (moderator)
+app.post("/approve", (req, res) => {
+  const { id } = req.body;
+  const video = videos.find((v) => v.id === id);
+  if (video) video.approved = true;
+  fs.writeFileSync("videos.json", JSON.stringify(videos));
+  res.json({ success: true });
 });
 
-// --- Load videos ---
-async function loadVideos(){
-    const res = await fetch(`${API}/videos`);
-    const data = await res.json();
-    videoFeed.innerHTML="";
-    modVideosList.innerHTML="";
-    data.videos.forEach(v=>{
-        if(v.approved){
-            const div = document.createElement("div");
-            div.className="video-card";
-            div.innerHTML=`<img src="https://img.youtube.com/vi/${getYouTubeID(v.url)}/0.jpg" onclick="watchVideo('${v.url}')">
-                             <div class="video-info"><h4 onclick="watchVideo('${v.url}')">${v.title}</h4><p>by ${v.username}</p></div>`;
-            videoFeed.appendChild(div);
-        } else if(currentUser==="mod"){
-            const li = document.createElement("li");
-            li.innerHTML=`${v.title} by ${v.username} <button onclick="approveVideo('${v.id}')">Approve</button>`;
-            modVideosList.appendChild(li);
-        }
-    });
-}
+// Get videos
+app.get("/videos", (req, res) => res.json({ videos }));
 
-// --- Approve video ---
-async function approveVideo(id){
-    const res = await fetch(`${API}/approve`, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({id})
-    });
-    const data = await res.json();
-    loadVideos();
-}
-
-// --- Navigation ---
-homeBtn.addEventListener("click", ()=>{
-    videoFeed.style.display="block";
-    uploadPanel.style.display="none";
-    modPanel.style.display="none";
-});
-uploadNavBtn.addEventListener("click", ()=>{
-    videoFeed.style.display="none";
-    uploadPanel.style.display="block";
-    modPanel.style.display="none";
-});
-modNavBtn.addEventListener("click", ()=>{
-    videoFeed.style.display="none";
-    uploadPanel.style.display="none";
-    modPanel.style.display="block";
-});
-
-// --- Watch video function ---
-function watchVideo(url){ window.open(url,"_blank"); }
-
-// --- Get YouTube thumbnail ID ---
-function getYouTubeID(url){
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length===11)? match[2] : null;
-}
+// Start server
+app.listen(port, () => console.log(`Server running on port ${port}`));
