@@ -1,28 +1,27 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
-let users = JSON.parse(fs.readFileSync("users.json"));
-let videos = JSON.parse(fs.readFileSync("videos.json"));
+let users = JSON.parse(fs.readFileSync("users.json", "utf8"));
+let videos = JSON.parse(fs.readFileSync("videos.json", "utf8"));
 
 function save() {
   fs.writeFileSync("users.json", JSON.stringify(users, null, 2));
   fs.writeFileSync("videos.json", JSON.stringify(videos, null, 2));
 }
 
-// AUTH
+/* AUTH */
 app.post("/signup", (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, age } = req.body;
   if (!username || !password) return res.json({ error: "Missing fields" });
   if (users[username]) return res.json({ error: "User exists" });
 
-  users[username] = { password, role: "user" };
+  users[username] = { password, age, role: "user" };
   save();
   res.json({ success: true });
 });
@@ -32,62 +31,66 @@ app.post("/login", (req, res) => {
   if (!users[username] || users[username].password !== password)
     return res.json({ error: "Invalid login" });
 
-  res.json({ success: true, user: { username, role: users[username].role } });
+  res.json({ success: true, user: users[username] });
 });
 
-// VIDEOS
+/* VIDEOS */
 app.post("/upload", (req, res) => {
-  const { title, url, author } = req.body;
+  const { title, url, username } = req.body;
+  if (!title || !url) return res.json({ error: "Missing data" });
+
   videos.push({
-    id: Date.now().toString(),
+    id: crypto.randomUUID(),
     title,
     url,
-    author,
+    username,
     approved: false,
-    likes: [],
-    dislikes: [],
+    likes: 0,
+    views: 0,
     comments: []
   });
+
   save();
   res.json({ success: true });
 });
 
 app.get("/videos", (req, res) => {
-  res.json(videos.filter(v => v.approved));
+  res.json(videos);
 });
 
-// LIKE / DISLIKE
-app.post("/react", (req, res) => {
-  const { id, user, type } = req.body;
-  const video = videos.find(v => v.id === id);
+app.post("/approve", (req, res) => {
+  const video = videos.find(v => v.id === req.body.id);
   if (!video) return res.json({ error: "Not found" });
-
-  video.likes = video.likes.filter(u => u !== user);
-  video.dislikes = video.dislikes.filter(u => u !== user);
-
-  if (type === "like") video.likes.push(user);
-  if (type === "dislike") video.dislikes.push(user);
-
+  video.approved = true;
   save();
   res.json({ success: true });
 });
 
-// COMMENT
+/* INTERACTIONS */
+app.post("/like", (req, res) => {
+  const video = videos.find(v => v.id === req.body.id);
+  if (!video) return res.json({ error: "Not found" });
+  video.likes++;
+  save();
+  res.json({ likes: video.likes });
+});
+
+app.post("/view", (req, res) => {
+  const video = videos.find(v => v.id === req.body.id);
+  if (!video) return res.json({ error: "Not found" });
+  video.views++;
+  save();
+  res.json({ views: video.views });
+});
+
 app.post("/comment", (req, res) => {
   const { id, user, text } = req.body;
   const video = videos.find(v => v.id === id);
-  video.comments.push({ user, text });
+  if (!video) return res.json({ error: "Not found" });
+
+  video.comments.push({ user, text, time: Date.now() });
   save();
   res.json({ success: true });
 });
 
-// MODERATION
-app.post("/approve", (req, res) => {
-  const { id } = req.body;
-  const video = videos.find(v => v.id === id);
-  if (video) video.approved = true;
-  save();
-  res.json({ success: true });
-});
-
-app.listen(PORT, () => console.log("WatchVision running"));
+app.listen(port, () => console.log("WatchVision running"));
