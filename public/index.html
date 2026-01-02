@@ -8,52 +8,46 @@
 </head>
 <body>
 <header>
-    <h1>WatchVision</h1>
-    <input type="text" id="search-bar" placeholder="Search videos...">
-    <button id="search-btn">Search</button>
+  <h1>WatchVision</h1>
+  <input type="text" id="search-bar" placeholder="Search videos...">
+  <button id="search-btn">Search</button>
 </header>
 
 <main>
-    <!-- AUTH -->
-    <section id="auth-section">
-        <h2>Login / Signup</h2>
-        <input type="text" id="username" placeholder="Username">
-        <input type="password" id="password" placeholder="Password">
-        <div class="auth-buttons">
-            <button id="signup-btn">Sign Up</button>
-            <button id="login-btn">Login</button>
-        </div>
-        <p id="auth-message"></p>
-    </section>
+  <!-- Auth Section -->
+  <section id="auth-section">
+    <h2>Login / Signup</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <div class="auth-buttons">
+      <button id="signup-btn">Sign Up</button>
+      <button id="login-btn">Login</button>
+    </div>
+    <p id="auth-message"></p>
+  </section>
 
-    <!-- DASHBOARD -->
-    <section id="dashboard-section" style="display:none;">
-        <div class="sidebar">
-            <button id="home-btn">Home</button>
-            <button id="upload-nav-btn">Upload</button>
-            <button id="mod-nav-btn" style="display:none;">Moderator</button>
-            <button id="logout-btn">Logout</button>
-        </div>
-
-        <div class="main-content">
-            <!-- Video feed -->
-            <div id="video-feed"></div>
-
-            <!-- Upload panel -->
-            <div id="upload-panel" style="display:none;">
-                <h3>Upload Video</h3>
-                <input type="text" id="video-title" placeholder="Video Title">
-                <input type="url" id="video-url" placeholder="Video URL (YouTube or MP4)">
-                <button id="upload-btn">Upload</button>
-            </div>
-
-            <!-- Moderator panel -->
-            <div id="mod-panel" style="display:none;">
-                <h3>Moderator Panel</h3>
-                <ul id="mod-videos-list"></ul>
-            </div>
-        </div>
-    </section>
+  <!-- Dashboard -->
+  <section id="dashboard-section" style="display:none;">
+    <div class="sidebar">
+      <button id="home-btn">Home</button>
+      <button id="upload-nav-btn">Upload</button>
+      <button id="mod-nav-btn" style="display:none;">Moderator</button>
+      <button id="logout-btn">Logout</button>
+    </div>
+    <div class="main-content">
+      <div id="video-feed"></div>
+      <div id="upload-panel" style="display:none;">
+        <h3>Upload Video</h3>
+        <input type="text" id="video-title" placeholder="Video Title">
+        <input type="url" id="video-url" placeholder="Video URL (YouTube or MP4)">
+        <button id="upload-btn">Upload</button>
+      </div>
+      <div id="mod-panel" style="display:none;">
+        <h3>Moderator Panel</h3>
+        <ul id="mod-videos-list"></ul>
+      </div>
+    </div>
+  </section>
 </main>
 
 <script src="script.js"></script>
